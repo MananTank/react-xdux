@@ -1,0 +1,12 @@
+{
+  "name": "react-xedux",
+  "version": "1.0.0",
+  "description": "Official React binding for xedux",
+  "main": "index.js",
+  "git repository": "https://github.com/MananTank/react-xedux",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Manan Tank",
+  "license": "ISC"
+}
