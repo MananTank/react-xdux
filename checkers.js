@@ -15,7 +15,7 @@ const PROP_NAME_COLLISION = (dep, compName) => {
 export const check_deps = (state, deps, compName) => {
 	if (deps && deps.length) {
 		for (const dep of deps) {
-			if (!(dep in state)) INVALID_DEP_ERROR();
+			if (!(dep in state)) INVALID_DEP_ERROR(dep, compName);
 		}
 	}
 };

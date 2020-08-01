@@ -41,7 +41,8 @@ const connect = (Comp, deps) => {
 		render() {
 			const props = {
 				...this.props,
-				dispatch: this.context.store.dispatch,
+				dispatch: (v, ad) => this.context.store.dispatch(v, ad, Comp.name),
+				_dispatch: (x, y) => () => this.context.store.dispatch(x, y, Comp.name),
 			};
 			if (hasDeps) deps.forEach(d => (props[d] = this.context.store.state[d]));
 			return React.createElement(Comp, props);
