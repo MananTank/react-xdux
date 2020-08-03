@@ -1,12 +1,23 @@
 {
   "name": "react-xedux",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Official React binding for xedux",
   "main": "index.js",
   "git repository": "https://github.com/MananTank/react-xedux",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "peerDependencies": {
+    "react": ">16.8.3",
+    "xedux": ">4.0.0"
+  },
+  "keywords": [
+    "react",
+    "xedux",
+    "redux",
+    "react-xedux",
+    "react-redux"
+  ],
   "author": "Manan Tank",
   "license": "ISC"
 }
