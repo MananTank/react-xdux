@@ -1,14 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { check_deps } from './checkers';
-
-function getProps(store, deps, componentName) {
-	const props = {
-		dispatch: (...x) => store.dispatch(...x, componentName),
-	};
-
-	if (deps) for (const dep of deps) props[dep] = store.state[dep];
-	return props;
-}
+import { check_deps, whoCalledMe, getProps } from './helpers';
 
 let StoreContext = React.createContext();
 
@@ -17,8 +8,10 @@ export const Provider = ({ children, store }) =>
 
 export const useStore = deps => {
 	const { store } = useContext(StoreContext);
-	check_deps(store.state, deps, useStore.caller.name);
-	const [props, setProps] = useState(getProps(store, deps, useStore.caller.name));
+	const componentName = whoCalledMe();
+
+	check_deps(store.state, deps, componentName);
+	const [props, setProps] = useState(getProps(store, deps, componentName));
 
 	useEffect(() => {
 		const listener = info => {
@@ -30,8 +23,8 @@ export const useStore = deps => {
 						break;
 					}
 				}
-				const compName = () => useStore.caller.name;
-				if (shouldUpdate) setProps(getProps(store, deps, compName));
+
+				if (shouldUpdate) setProps(getProps(store, deps, componentName));
 			}
 		};
 
