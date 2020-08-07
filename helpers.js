@@ -1,14 +1,14 @@
-const INVALID_SLICE_NAME = (dep, compName) => {
+const INVALID_SLICE_NAME = (dep, component) => {
   throw new Error(
-    `Asking for invalid slice "${dep}" in the useStore hook in <${compName}/> \n` +
+    `Asking for invalid slice "${dep}" in the useStore hook in <${component}/> \n` +
       'No such slice exists in the store.'
   )
 }
 
-export const checkDepsValidity = (state, deps, compName) => {
+export const checkDepsValidity = (state, deps, component) => {
   if (deps && deps.length) {
     for (const dep of deps) {
-      if (!(dep in state)) INVALID_SLICE_NAME(dep, compName)
+      if (!(dep in state)) INVALID_SLICE_NAME(dep, component)
     }
   }
 }
@@ -25,15 +25,12 @@ export function whoCalledMe () {
   }
 }
 
-export function getProps (store, deps, componentName) {
-  const props = {
-    dispatch: (...x) => store.dispatch(...x, componentName)
-  }
-
-  if (deps && deps.length) {
-    for (const dep of deps) {
-      props[dep] = store.state[dep]
+export const getSliceStates = (store, sliceNames) => {
+  const sliceStates = []
+  if (sliceNames && sliceNames.length) {
+    for (const sliceName of sliceNames) {
+      sliceStates.push(store.state[sliceName])
     }
   }
-  return props
+  return sliceStates
 }
