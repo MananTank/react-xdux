@@ -6,12 +6,27 @@ const StoreContext = React.createContext()
 export const Provider = ({ children, store }) =>
   React.createElement(StoreContext.Provider, { value: { store } }, children)
 
+// --------------------------------------------
+
 export const useSlice = (...deps) => {
   const { store } = useContext(StoreContext)
   const component = whoCalledMe() // needs improvement ?
-  checkDepsValidity(store.state, deps, component)
   const initialSliceStates = getSliceStates(store, deps, component)
   const [sliceStates, setSliceStates] = useState(initialSliceStates)
+
+  // subscribe for updates
+  // return unscubscribe as cleanup
+  useEffect(() => {
+    if (deps && deps.length) return store.subscribe(listener) // return unsubscirbe as cleanup
+    // eslint-disable-next-line
+  }, []);
+
+  // check validity only once
+  // add to usage only once
+  if (!store.componentUsage[component]) {
+    checkDepsValidity(store.state, deps, component)
+    deps.forEach(sliceName => store.addSliceUsage(component, sliceName))
+  }
 
   const listener = mutation => {
     let shouldUpdate = false
@@ -26,43 +41,41 @@ export const useSlice = (...deps) => {
     if (shouldUpdate) setSliceStates(newSliceStates)
   }
 
-  useEffect(() => {
-    if (deps && deps.length) {
-      return store.subscribe(listener) // return unsubscirbe as cleanup
-    }
-
-    // eslint-disable-next-line
-	}, []);
-
   return sliceStates.length > 1 ? sliceStates : sliceStates[0]
 }
 
-export const useStatic = (...statics) => {
+// --------------------------------------------
+
+export const useConst = (...constantNames) => {
   const { store } = useContext(StoreContext)
   const component = whoCalledMe() // needs improvement ?
-  const staticValues = []
-  for (const st of statics) {
-    if (!store.statics[st]) throw new Error(`Invalid static "${st}" used in useStatic() hook in <${component}/>. No such static exists in store`)
-    staticValues.push(store.statics[st])
-  }
-  return staticValues.length > 1 ? staticValues : staticValues[0]
+  store.addConstUsage(component, constantNames)
+  const { constants } = store.componentUsage[component]
+  return constants.length > 1 ? constants : constants[0]
 }
 
-export const useFullStore = () => {
+// --------------------------------------------
+
+export const useStore = () => {
   const { store } = useContext(StoreContext)
   return store
 }
 
-export const useDispatch = (...actionTypes) => {
-  const { store } = useContext(StoreContext)
+// --------------------------------------------
+
+// returns a stable ('memoized') dispatch function with actionType already set as the first argument
+// just call the returned function with actionData
+export const useAction = (...actionTypes) => {
   const component = whoCalledMe() // needs improvement ???
-  const dispatchers = []
-
-  for (const actionType of actionTypes) {
-    if (!store.isValidActionType(actionType)) throw new Error(`Invalid action type "${actionType}" used in useDispatch hook in <${component}/>, no such action type exists`)
-    const dispatcher = (actionData) => store.dispatch(actionType, actionData, { component })
-    dispatchers.push(dispatcher)
-  }
-
-  return actionTypes.length > 1 ? dispatchers : dispatchers[0]
+  const { store } = useContext(StoreContext)
+  store.addActionTypeUsage(component, actionTypes)
+  const { dispatchers } = store.componentUsage[component]
+  return dispatchers.length > 1 ? dispatchers : dispatchers[0]
 }
+
+export const useDispatch = () => {
+  const { store } = useContext(StoreContext)
+  return store.dispatch
+}
+
+// --------------------------------------------
