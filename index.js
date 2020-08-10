@@ -1,81 +1,63 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { checkDepsValidity, whoCalledMe, getSliceStates } from './helpers'
+import { checkSliceNames, getSliceStates, invalidActionError } from './helpers'
 
 const StoreContext = React.createContext()
 
-export const Provider = ({ children, store }) =>
-  React.createElement(StoreContext.Provider, { value: { store } }, children)
-
-// --------------------------------------------
-
-export const useSlice = (...deps) => {
+// accepts one or more sliceNames
+// returns their values from store
+// re-renders component when state changes
+export const useSlice = (...sliceNames) => {
   const { store } = useContext(StoreContext)
-  const component = whoCalledMe() // needs improvement ?
-  const initialSliceStates = getSliceStates(store, deps, component)
-  const [sliceStates, setSliceStates] = useState(initialSliceStates)
-
-  // subscribe for updates
-  // return unscubscribe as cleanup
-  useEffect(() => {
-    if (deps && deps.length) return store.subscribe(listener) // return unsubscirbe as cleanup
-    // eslint-disable-next-line
-  }, []);
-
-  // check validity only once
-  // add to usage only once
-  if (!store.componentUsage[component]) {
-    checkDepsValidity(store.state, deps, component)
-    deps.forEach(sliceName => store.addSliceUsage(component, sliceName))
-  }
+  const initSliceStates = getSliceStates(store.state, sliceNames)
+  const [sliceStates, setSliceStates] = useState(initSliceStates)
 
   const listener = mutation => {
     let shouldUpdate = false
-    for (const dep of deps) {
-      if (dep in mutation.updatedSlices) {
+    for (const sliceName of sliceNames) {
+      if (sliceName in mutation.updatedSlices) {
         shouldUpdate = true
         break
       }
     }
 
-    const newSliceStates = getSliceStates(store, deps, component)
+    const newSliceStates = getSliceStates(store.state, sliceNames)
     if (shouldUpdate) setSliceStates(newSliceStates)
   }
+
+  // subscribe to store for state change, return unsubscribe as cleanup
+  useEffect(() => store.subscribe(listener), [])
+
+  // check if sliceNames are valid
+  checkSliceNames(store.state, sliceNames)
 
   return sliceStates.length > 1 ? sliceStates : sliceStates[0]
 }
 
-// --------------------------------------------
-
+// accepts one or more constant names, returns their value from store
 export const useConst = (...constantNames) => {
   const { store } = useContext(StoreContext)
-  const component = whoCalledMe() // needs improvement ?
-  store.addConstUsage(component, constantNames)
-  const { constants } = store.componentUsage[component]
+  const constants = constantNames.map(c => {
+    const constant = store.constants[c]
+    if (!(c in store.constants)) throw new Error('invalid constant', c, 'used in useConst')
+    return constant
+  })
   return constants.length > 1 ? constants : constants[0]
 }
 
-// --------------------------------------------
-
-export const useStore = () => {
+// accepts name of an action and returns a dispatcher for that action
+// returned function is a memoized function (stable), so no need to memoize it further in components
+export const useAction = (actionType) => {
   const { store } = useContext(StoreContext)
-  return store
+  if (!(actionType in store.dispatchers)) invalidActionError(actionType)
+  return store.dispatchers[actionType]
 }
 
-// --------------------------------------------
+// returns store
+export const useStore = () => useContext(StoreContext).store
 
-// returns a stable ('memoized') dispatch function with actionType already set as the first argument
-// just call the returned function with actionData
-export const useAction = (...actionTypes) => {
-  const component = whoCalledMe() // needs improvement ???
-  const { store } = useContext(StoreContext)
-  store.addActionTypeUsage(component, actionTypes)
-  const { dispatchers } = store.componentUsage[component]
-  return dispatchers.length > 1 ? dispatchers : dispatchers[0]
-}
+// returns store's dispatch method
+export const useDispatch = () => useContext(StoreContext).store.dispatch
 
-export const useDispatch = () => {
-  const { store } = useContext(StoreContext)
-  return store.dispatch
-}
-
-// --------------------------------------------
+// returns a react component which injects store via context
+export const Provider = ({ children, store }) =>
+  React.createElement(StoreContext.Provider, { value: { store } }, children)
