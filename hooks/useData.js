@@ -5,7 +5,7 @@ import trace from '../utils/trace'
 const invalidSliceNameError = (sliceName) => {
   if (process.env.NODE_ENV !== 'production') {
     throw new Error(
-    `invalid SliceName: "${sliceName}" used in useSlice() in < ${trace(2)} />` +
+    `invalid SliceName: "${sliceName}" used in useData() in < ${trace(2)} />` +
       '\nNo such slice exists in the store.'
     )
   }
@@ -17,7 +17,7 @@ const checkSliceNames = (state, sliceNames) => {
   }
 }
 
-const useSlice = (...sliceNames) => {
+const useData = (...sliceNames) => {
   const { store } = useContext(StoreContext)
   checkSliceNames(store.state, sliceNames)
 
@@ -31,4 +31,4 @@ const useSlice = (...sliceNames) => {
   return sliceStates.length > 1 ? sliceStates : sliceStates[0]
 }
 
-export default useSlice
+export default useData

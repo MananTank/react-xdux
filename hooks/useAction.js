@@ -10,10 +10,10 @@ const invalidActionError = (action) => {
   }
 }
 
-const useAction = (action) => {
+const useAction = (sliceName) => {
   const { store } = useContext(StoreContext)
-  if (!(action in store.dispatchers)) invalidActionError(action)
-  return store.dispatchers[action]
+  if (!(sliceName in store.dispatchers)) invalidActionError(sliceName)
+  return store.dispatchers[sliceName]
 }
 
 export default useAction
